@@ -1,25 +1,37 @@
 import { useState, useEffect } from "react";
 import { Text, View, TouchableOpacity, FlatList, TextInput, Modal, StyleSheet, Animated } from "react-native";
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import { Task, TaskSet } from "../types";
 import { getTaskSetById } from "../services/mockData";
 
 export default function TaskSetScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
   const [taskSet, setTaskSet] = useState<TaskSet | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState('');
 
   useEffect(() => {
     const currentTaskSet = getTaskSetById(id);
     if (currentTaskSet) {
       setTaskSet(currentTaskSet);
       setTasks(currentTaskSet.tasks);
+      setEditingTitle(currentTaskSet.name);
     }
   }, [id]);
+
+  const handleTitleSave = () => {
+    if (editingTitle.trim() && taskSet) {
+      setTaskSet({ ...taskSet, name: editingTitle.trim() });
+      // Aquí deberías agregar la lógica para guardar el cambio en tu backend
+    }
+    setIsEditingTitle(false);
+  };
 
   const addNewTask = () => {
     if (newTaskText.trim()) {
@@ -48,12 +60,14 @@ export default function TaskSetScreen() {
 
   const renderRightActions = (taskId: string) => {
     return (
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => deleteTask(taskId)}
-      >
-        <Ionicons name="trash-outline" size={24} color="white" />
-      </TouchableOpacity>
+      <View style={styles.rightActionContainer}>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => deleteTask(taskId)}
+        >
+          <Ionicons name="trash-outline" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -85,7 +99,33 @@ export default function TaskSetScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerEmoji}>{taskSet?.emoji}</Text>
-        <Text style={styles.headerTitle}>{taskSet?.name}</Text>
+        {isEditingTitle ? (
+          <View style={styles.titleEditContainer}>
+            <TextInput
+              style={styles.titleInput}
+              value={editingTitle}
+              onChangeText={setEditingTitle}
+              onBlur={handleTitleSave}
+              onSubmitEditing={handleTitleSave}
+              autoFocus
+              selectTextOnFocus
+            />
+            <TouchableOpacity 
+              style={styles.saveTitleButton}
+              onPress={handleTitleSave}
+            >
+              <Ionicons name="checkmark" size={24} color="#007AFF" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={styles.titleContainer}
+            onPress={() => setIsEditingTitle(true)}
+          >
+            <Text style={styles.headerTitle}>{taskSet?.name}</Text>
+            <Ionicons name="pencil" size={16} color="#999" style={styles.editIcon} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <TouchableOpacity 
@@ -148,6 +188,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+    justifyContent: 'space-between',
   },
   headerEmoji: {
     fontSize: 32,
@@ -156,6 +197,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
+    flex: 1,
   },
   addButton: {
     flexDirection: 'row',
@@ -251,11 +293,56 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
   },
+  rightActionContainer: {
+    marginBottom: 10,
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   deleteButton: {
     backgroundColor: '#ff3b30',
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
     height: '100%',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  titleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+  titleEditContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  titleInput: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: 'bold',
+    padding: 8,
+  },
+  saveTitleButton: {
+    padding: 8,
+  },
+  editIcon: {
+    marginLeft: 8,
+    opacity: 0.6,
   },
 }); 
