@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Task, TaskSet } from "../types";
 import { getTaskSetById } from "../services/mockData";
 import { useTheme } from '../context/ThemeContext';
+import { NewTaskModal } from '../components/NewTaskModal';
 
 export default function TaskSetScreen() {
   const { theme } = useTheme();
@@ -156,43 +157,13 @@ export default function TaskSetScreen() {
         )}
       />
 
-      <Modal
+      <NewTaskModal
         visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-      >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Nueva Tarea</Text>
-            <TextInput
-              style={[styles.input, { 
-                borderColor: theme.border,
-                color: theme.text,
-                backgroundColor: theme.background
-              }]}
-              placeholder="Descripción de la tarea"
-              placeholderTextColor={theme.textSecondary}
-              value={newTaskText}
-              onChangeText={setNewTaskText}
-              multiline
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.button, { backgroundColor: theme.error }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.button, { backgroundColor: theme.success }]}
-                onPress={addNewTask}
-              >
-                <Text style={styles.buttonText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        onSave={addNewTask}
+        taskText={newTaskText}
+        onChangeText={setNewTaskText}
+      />
     </View>
   );
 }

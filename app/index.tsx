@@ -7,6 +7,7 @@ import { Task, TaskSet } from "./types";
 import { getTaskSets } from "./services/mockData";
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { useTheme } from './context/ThemeContext';
+import { CreateTaskSetModal } from './components/CreateTaskSetModal';
 
 export default function Index() {
   const { theme } = useTheme();
@@ -122,53 +123,15 @@ export default function Index() {
         renderItem={renderTaskSet}
       />
 
-      <Modal
+      <CreateTaskSetModal
         visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-      >
-        <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Nuevo Conjunto de Tareas</Text>
-            <TextInput
-              style={[styles.input, { 
-                borderColor: theme.border,
-                color: theme.text,
-                backgroundColor: theme.background
-              }]}
-              placeholder="Nombre del conjunto"
-              placeholderTextColor={theme.textSecondary}
-              value={newSetName}
-              onChangeText={setNewSetName}
-            />
-            <TextInput
-              style={[styles.input, { 
-                borderColor: theme.border,
-                color: theme.text,
-                backgroundColor: theme.background
-              }]}
-              placeholder="Emoji (opcional)"
-              placeholderTextColor={theme.textSecondary}
-              value={newSetEmoji}
-              onChangeText={setNewSetEmoji}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.button, { backgroundColor: theme.error }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.button, { backgroundColor: theme.success }]}
-                onPress={addNewSet}
-              >
-                <Text style={styles.buttonText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        onSave={addNewSet}
+        newSetName={newSetName}
+        setNewSetName={setNewSetName}
+        newSetEmoji={newSetEmoji}
+        setNewSetEmoji={setNewSetEmoji}
+      />
 
       <ConfirmationModal
         visible={deleteModalVisible}
@@ -229,51 +192,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   taskSetName: {
-    fontSize: 16,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  button: {
-    padding: 10,
-    borderRadius: 5,
-    width: '45%',
-  },
-  cancelButton: {
-    backgroundColor: '#ff3b30',
-  },
-  saveButton: {
-    backgroundColor: '#34c759',
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
     fontSize: 16,
   },
   rightActionContainer: {
