@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Text, View, TouchableOpacity, FlatList, TextInput, Modal, StyleSheet } from "react-native";
+import { Text, View, TouchableOpacity, FlatList, TextInput, Modal, StyleSheet, Animated } from "react-native";
+import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import { Task, TaskSet } from "../types";
@@ -41,6 +42,45 @@ export default function TaskSetScreen() {
     ));
   };
 
+  const deleteTask = (taskId: string) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+  };
+
+  const renderRightActions = (taskId: string) => {
+    return (
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => deleteTask(taskId)}
+      >
+        <Ionicons name="trash-outline" size={24} color="white" />
+      </TouchableOpacity>
+    );
+  };
+
+  const renderTask = ({ item }: { item: Task }) => (
+    <GestureHandlerRootView>
+      <Swipeable
+        renderRightActions={() => renderRightActions(item.id)}
+        rightThreshold={40}
+      >
+        <TouchableOpacity 
+          style={styles.taskItem}
+          onPress={() => toggleTask(item.id)}
+        >
+          <View style={[styles.checkbox, item.completed && styles.checkboxChecked]}>
+            {item.completed && <Ionicons name="checkmark" size={16} color="white" />}
+          </View>
+          <Text style={[
+            styles.taskText,
+            item.completed && styles.taskTextCompleted
+          ]}>
+            {item.title}
+          </Text>
+        </TouchableOpacity>
+      </Swipeable>
+    </GestureHandlerRootView>
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -59,22 +99,7 @@ export default function TaskSetScreen() {
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.taskItem}
-            onPress={() => toggleTask(item.id)}
-          >
-            <View style={[styles.checkbox, item.completed && styles.checkboxChecked]}>
-              {item.completed && <Ionicons name="checkmark" size={16} color="white" />}
-            </View>
-            <Text style={[
-              styles.taskText,
-              item.completed && styles.taskTextCompleted
-            ]}>
-              {item.title}
-            </Text>
-          </TouchableOpacity>
-        )}
+        renderItem={renderTask}
       />
 
       <Modal
@@ -225,5 +250,12 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: '#ff3b30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
   },
 }); 
