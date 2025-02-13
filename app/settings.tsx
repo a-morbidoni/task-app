@@ -1,11 +1,109 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { themes } from './constants/themes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from './context/ThemeContext';
+import { TaskSet } from './types';  // Add this import
 
-export default function Settings() {
+// Clave para almacenar los conjuntos de tareas
+const TASK_SETS_KEY = '@task_sets';
+
+// Guardar conjunto de tareas
+export const saveTaskSets = async (taskSets: TaskSet[]) => {
+  try {
+    const jsonValue = JSON.stringify(taskSets);
+    await AsyncStorage.setItem(TASK_SETS_KEY, jsonValue);
+  } catch (error) {
+    console.error('Error al guardar los conjuntos de tareas:', error);
+  }
+};
+
+// Obtener todos los conjuntos de tareas
+export const getTaskSets = async (): Promise<TaskSet[]> => {
+  try {
+    const jsonValue = await AsyncStorage.getItem(TASK_SETS_KEY);
+    return jsonValue != null ? JSON.parse(jsonValue) : [];
+  } catch (error) {
+    console.error('Error al obtener los conjuntos de tareas:', error);
+    return [];
+  }
+};
+
+// Agregar un nuevo conjunto de tareas
+export const addTaskSet = async (newTaskSet: TaskSet) => {
+  try {
+    const currentTaskSets = await getTaskSets();
+    const updatedTaskSets = [...currentTaskSets, newTaskSet];
+    await saveTaskSets(updatedTaskSets);
+    return updatedTaskSets;
+  } catch (error) {
+    console.error('Error al agregar conjunto de tareas:', error);
+    return [];
+  }
+};
+
+// Actualizar un conjunto de tareas existente
+export const updateTaskSet = async (updatedTaskSet: TaskSet, taskSetId: string) => {
+  try {
+    const currentTaskSets = await getTaskSets();
+    const updatedTaskSets = currentTaskSets.map(taskSet => 
+      taskSet.id === taskSetId ? updatedTaskSet : taskSet
+    );
+    await saveTaskSets(updatedTaskSets);
+    return updatedTaskSets;
+  } catch (error) {
+    console.error('Error al actualizar conjunto de tareas:', error);
+    return [];
+  }
+};
+
+// Eliminar un conjunto de tareas
+export const deleteTaskSet = async (taskSetId: string) => {
+  try {
+    const currentTaskSets = await getTaskSets();
+    const updatedTaskSets = currentTaskSets.filter(taskSet => 
+      taskSet.id !== taskSetId
+    );
+    await saveTaskSets(updatedTaskSets);
+    return updatedTaskSets;
+  } catch (error) {
+    console.error('Error al eliminar conjunto de tareas:', error);
+    return [];
+  }
+};
+
+const TaskSetsScreen = () => {
+  const [taskSets, setTaskSets] = useState<TaskSet[]>([]);
+
+  // Cargar los datos al iniciar
+  useEffect(() => {
+    loadTaskSets();
+  }, []);
+
+  const loadTaskSets = async () => {
+    const savedTaskSets = await getTaskSets();
+    setTaskSets(savedTaskSets);
+  };
+
+  // Ejemplo de cómo agregar un nuevo conjunto
+  const handleAddTaskSet = async (newTaskSet: TaskSet) => {
+    const updatedTaskSets = await addTaskSet(newTaskSet);
+    setTaskSets(updatedTaskSets);
+  };
+
+  // Ejemplo de cómo actualizar un conjunto
+  const handleUpdateTaskSet = async (updatedTaskSet: TaskSet, taskSetId: string) => {
+    const updatedTaskSets = await updateTaskSet(updatedTaskSet, taskSetId);
+    setTaskSets(updatedTaskSets);
+  };
+
+  // Ejemplo de cómo eliminar un conjunto
+  const handleDeleteTaskSet = async (taskSetId: string) => {
+    const updatedTaskSets = await deleteTaskSet(taskSetId);
+    setTaskSets(updatedTaskSets);
+  };
+
   const { 
     theme, 
     selectedTheme, 
@@ -104,7 +202,9 @@ export default function Settings() {
       </View>
     </ScrollView>
   );
-}
+};
+
+export default TaskSetsScreen;
 
 const styles = StyleSheet.create({
   container: {

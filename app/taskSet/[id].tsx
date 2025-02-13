@@ -4,9 +4,10 @@ import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import { Task, TaskSet } from "../types";
-import { getTaskSetById } from "../services/mockData";
+import { getTaskSets, updateTaskSet } from '../settings';
 import { useTheme } from '../context/ThemeContext';
 import { NewTaskModal } from '../components/NewTaskModal';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 export default function TaskSetScreen() {
   const { theme } = useTheme();
@@ -18,47 +19,74 @@ export default function TaskSetScreen() {
   const [taskSet, setTaskSet] = useState<TaskSet | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const currentTaskSet = getTaskSetById(id);
-    if (currentTaskSet) {
-      setTaskSet(currentTaskSet);
-      setTasks(currentTaskSet.tasks);
-      setEditingTitle(currentTaskSet.name);
-    }
+    loadTaskSet();
   }, [id]);
 
-  const handleTitleSave = () => {
+  const loadTaskSet = async () => {
+    setIsLoading(true);
+    try {
+      const allTaskSets = await getTaskSets();
+      const currentTaskSet = allTaskSets.find(set => set.id === id);
+      if (currentTaskSet) {
+        setTaskSet(currentTaskSet);
+        setTasks(currentTaskSet.tasks);
+        setEditingTitle(currentTaskSet.name);
+      }
+    } catch (error) {
+      console.error('Error loading task set:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTitleSave = async () => {
     if (editingTitle.trim() && taskSet) {
-      setTaskSet({ ...taskSet, name: editingTitle.trim() });
-      // Aquí deberías agregar la lógica para guardar el cambio en tu backend
+      const updatedTaskSet = { ...taskSet, name: editingTitle.trim() };
+      await updateTaskSet(updatedTaskSet, taskSet.id);
+      await loadTaskSet();
     }
     setIsEditingTitle(false);
   };
 
-  const addNewTask = () => {
-    if (newTaskText.trim()) {
+  const addNewTask = async () => {
+    if (newTaskText.trim() && taskSet) {
       const newTask: Task = {
         id: Date.now().toString(),
         title: newTaskText.trim(),
         completed: false
       };
-      setTasks([...tasks, newTask]);
+      const updatedTasks = [...tasks, newTask];
+      const updatedTaskSet = { ...taskSet, tasks: updatedTasks };
+      await updateTaskSet(updatedTaskSet, taskSet.id);
+      await loadTaskSet();
       setModalVisible(false);
       setNewTaskText('');
     }
   };
 
-  const toggleTask = (taskId: string) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, completed: !task.completed }
-        : task
-    ));
+  const toggleTask = async (taskId: string) => {
+    if (taskSet) {
+      const updatedTasks = tasks.map(task => 
+        task.id === taskId 
+          ? { ...task, completed: !task.completed }
+          : task
+      );
+      const updatedTaskSet = { ...taskSet, tasks: updatedTasks };
+      await updateTaskSet(updatedTaskSet, taskSet.id);
+      await loadTaskSet();
+    }
   };
 
-  const deleteTask = (taskId: string) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
+  const deleteTask = async (taskId: string) => {
+    if (taskSet) {
+      const updatedTasks = tasks.filter(task => task.id !== taskId);
+      const updatedTaskSet = { ...taskSet, tasks: updatedTasks };
+      await updateTaskSet(updatedTaskSet, taskSet.id);
+      await loadTaskSet();
+    }
   };
 
   const renderRightActions = (taskId: string) => {
@@ -74,8 +102,24 @@ export default function TaskSetScreen() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <Animated.View 
+        entering={FadeIn.duration(200)}
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
+        <View style={styles.loadingContainer}>
+          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando...</Text>
+        </View>
+      </Animated.View>
+    );
+  }
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <Animated.View 
+      entering={FadeIn.duration(200)}
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -164,7 +208,7 @@ export default function TaskSetScreen() {
         taskText={newTaskText}
         onChangeText={setNewTaskText}
       />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -340,5 +384,13 @@ const styles = StyleSheet.create({
   editIcon: {
     marginLeft: 8,
     opacity: 0.6,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
   },
 }); 

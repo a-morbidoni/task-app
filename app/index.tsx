@@ -1,17 +1,20 @@
-import { useState } from "react";
-import { Text, View, TouchableOpacity, FlatList, TextInput, Modal, StyleSheet } from "react-native";
 import { EvilIcons, Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
-import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Task, TaskSet } from "./types";
-import { getTaskSets } from "./services/mockData";
+import { useEffect, useState, useCallback } from "react";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import { ConfirmationModal } from './components/ConfirmationModal';
-import { useTheme } from './context/ThemeContext';
 import { CreateTaskSetModal } from './components/CreateTaskSetModal';
+import { useTheme } from './context/ThemeContext';
+import { addTaskSet, deleteTaskSet, getTaskSets } from './settings';
+import { TaskSet } from "./types";
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { useFocusEffect } from "expo-router";
 
 export default function Index() {
   const { theme } = useTheme();
-  const [taskSets, setTaskSets] = useState<TaskSet[]>(getTaskSets());
+  const [taskSets, setTaskSets] = useState<TaskSet[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [cloneModalVisible, setCloneModalVisible] = useState(false);
@@ -21,15 +24,45 @@ export default function Index() {
   const [newSetEmoji, setNewSetEmoji] = useState('');
   const router = useRouter();
 
-  const handleDeleteConfirmation = (confirmed: boolean) => {
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const loadData = async () => {
+        setIsLoading(true);
+        try {
+          const savedTaskSets = await getTaskSets();
+          if (isActive) {
+            setTaskSets(savedTaskSets);
+          }
+        } catch (error) {
+          console.error('Error loading task sets:', error);
+        } finally {
+          if (isActive) {
+            setIsLoading(false);
+          }
+        }
+      };
+
+      loadData();
+
+      // Cleanup function
+      return () => {
+        isActive = false;
+      };
+    }, []) // Empty dependency array
+  );
+
+  const handleDeleteConfirmation = async (confirmed: boolean) => {
     if (confirmed && taskSetToDelete) {
-      setTaskSets(taskSets.filter(set => set.id !== taskSetToDelete));
+      await deleteTaskSet(taskSetToDelete);
+      await getTaskSets();
     }
     setDeleteModalVisible(false);
     setTaskSetToDelete(null);
   };
 
-  const handleCloneConfirmation = (confirmed: boolean) => {
+  const handleCloneConfirmation = async (confirmed: boolean) => {
     if (confirmed && taskSetToClone) {
       const clonedSet: TaskSet = {
         ...taskSetToClone,
@@ -37,7 +70,8 @@ export default function Index() {
         name: `${taskSetToClone.name} (copia)`,
         tasks: [...taskSetToClone.tasks]
       };
-      setTaskSets([...taskSets, clonedSet]);
+      await addTaskSet(clonedSet);
+      await getTaskSets();
     }
     setCloneModalVisible(false);
     setTaskSetToClone(null);
@@ -92,7 +126,7 @@ export default function Index() {
     </GestureHandlerRootView>
   );
 
-  const addNewSet = () => {
+  const addNewSet = async () => {
     if (newSetName.trim()) {
       const newSet: TaskSet = {
         id: Date.now().toString(),
@@ -100,15 +134,32 @@ export default function Index() {
         emoji: newSetEmoji || '📝',
         tasks: []
       };
-      setTaskSets([...taskSets, newSet]);
+      await addTaskSet(newSet);
+      await getTaskSets();
       setModalVisible(false);
       setNewSetName('');
       setNewSetEmoji('');
     }
   };
 
+  if (isLoading) {
+    return (
+      <Animated.View 
+        entering={FadeIn.duration(200)}
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
+        <View style={styles.loadingContainer}>
+          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando...</Text>
+        </View>
+      </Animated.View>
+    );
+  }
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <Animated.View 
+      entering={FadeIn.duration(200)}
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <TouchableOpacity 
         style={[styles.addButton, { backgroundColor: theme.primary }]}
         onPress={() => setModalVisible(true)}
@@ -150,7 +201,7 @@ export default function Index() {
         onCancel={() => handleCloneConfirmation(false)}
         confirmText="Clonar"
       />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -219,6 +270,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 70,
     height: '100%',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
   },
 });
 

@@ -8,29 +8,30 @@ export default function Layout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-        <View style={styles.container}>
-          <View style={styles.content}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            >
-              <Stack.Screen 
-                name="index" 
-                options={{ 
-                  title: "Mis Conjuntos de Tareas"
-                }} 
-              />
-              <Stack.Screen 
-                name="taskSet/[id]" 
-                options={{ 
-                  title: "Tareas"
-                }} 
-              />
-            </Stack>
-          </View>
-          <BottomNav />
-        </View>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            animationDuration: 200,
+            contentStyle: {
+              backgroundColor: 'transparent',
+            },
+          }}
+        >
+          <Stack.Screen 
+            name="index" 
+            options={{ 
+              title: "Mis Conjuntos de Tareas"
+            }} 
+          />
+          <Stack.Screen 
+            name="taskSet/[id]" 
+            options={{ 
+              title: "Tareas"
+            }} 
+          />
+        </Stack>
+        <BottomNav />
       </ThemeProvider>
     </GestureHandlerRootView>
   );
