@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { Text, View, TouchableOpacity, FlatList, TextInput, Modal, StyleSheet, Animated } from "react-native";
+import { Text, View, TouchableOpacity, FlatList, TextInput, Modal, StyleSheet } from "react-native";
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from '@expo/vector-icons';
 import { Task, TaskSet } from "../types";
 import { getTaskSetById } from "../services/mockData";
+import { useTheme } from '../context/ThemeContext';
 
 export default function TaskSetScreen() {
+  const { theme } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -62,47 +64,29 @@ export default function TaskSetScreen() {
     return (
       <View style={styles.rightActionContainer}>
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[styles.deleteButton, { backgroundColor: theme.error }]}
           onPress={() => deleteTask(taskId)}
         >
-          <Ionicons name="trash-outline" size={24} color="white" />
+          <Ionicons name="trash-outline" size={24} color={theme.text} />
         </TouchableOpacity>
       </View>
     );
   };
 
-  const renderTask = ({ item }: { item: Task }) => (
-    <GestureHandlerRootView>
-      <Swipeable
-        renderRightActions={() => renderRightActions(item.id)}
-        rightThreshold={40}
-      >
-        <TouchableOpacity 
-          style={styles.taskItem}
-          onPress={() => toggleTask(item.id)}
-        >
-          <View style={[styles.checkbox, item.completed && styles.checkboxChecked]}>
-            {item.completed && <Ionicons name="checkmark" size={16} color="white" />}
-          </View>
-          <Text style={[
-            styles.taskText,
-            item.completed && styles.taskTextCompleted
-          ]}>
-            {item.title}
-          </Text>
-        </TouchableOpacity>
-      </Swipeable>
-    </GestureHandlerRootView>
-  );
-
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color={theme.primary} />
+        </TouchableOpacity>
         <Text style={styles.headerEmoji}>{taskSet?.emoji}</Text>
         {isEditingTitle ? (
-          <View style={styles.titleEditContainer}>
+          <View style={[styles.titleEditContainer, { backgroundColor: theme.surface }]}>
             <TextInput
-              style={styles.titleInput}
+              style={[styles.titleInput, { color: theme.text }]}
               value={editingTitle}
               onChangeText={setEditingTitle}
               onBlur={handleTitleSave}
@@ -114,7 +98,7 @@ export default function TaskSetScreen() {
               style={styles.saveTitleButton}
               onPress={handleTitleSave}
             >
-              <Ionicons name="checkmark" size={24} color="#007AFF" />
+              <Ionicons name="checkmark" size={24} color={theme.primary} />
             </TouchableOpacity>
           </View>
         ) : (
@@ -122,24 +106,54 @@ export default function TaskSetScreen() {
             style={styles.titleContainer}
             onPress={() => setIsEditingTitle(true)}
           >
-            <Text style={styles.headerTitle}>{taskSet?.name}</Text>
-            <Ionicons name="pencil" size={16} color="#999" style={styles.editIcon} />
+            <Text style={[styles.headerTitle, { color: theme.text }]}>{taskSet?.name}</Text>
+            <Ionicons name="pencil" size={16} color={theme.textSecondary} style={styles.editIcon} />
           </TouchableOpacity>
         )}
       </View>
 
       <TouchableOpacity 
-        style={styles.addButton}
+        style={[styles.addButton, { backgroundColor: theme.primary }]}
         onPress={() => setModalVisible(true)}
       >
-        <Ionicons name="add" size={24} color="white" />
-        <Text style={styles.addButtonText}>Nueva Tarea</Text>
+        <Ionicons name="add" size={24} color={theme.surface} />
+        <Text style={[styles.addButtonText, { color: theme.surface }]}>Nueva Tarea</Text>
       </TouchableOpacity>
 
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
-        renderItem={renderTask}
+        renderItem={({ item }) => (
+          <GestureHandlerRootView>
+            <Swipeable
+              renderRightActions={() => renderRightActions(item.id)}
+              rightThreshold={40}
+            >
+              <TouchableOpacity 
+                style={[styles.taskItem, { backgroundColor: theme.surface }]}
+                onPress={() => toggleTask(item.id)}
+              >
+                <View style={[
+                  styles.checkbox,
+                  { borderColor: theme.primary },
+                  item.completed && { backgroundColor: theme.primary }
+                ]}>
+                  {item.completed && <Ionicons name="checkmark" size={16} color={theme.surface} />}
+                </View>
+                <Text style={[
+                  styles.taskText,
+                  { color: theme.text },
+                  item.completed && {
+                    textDecorationLine: 'line-through',
+                    color: theme.textSecondary
+                  }
+                ]}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            </Swipeable>
+          </GestureHandlerRootView>
+        )}
       />
 
       <Modal
@@ -148,24 +162,29 @@ export default function TaskSetScreen() {
         transparent={true}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nueva Tarea</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Nueva Tarea</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: theme.border,
+                color: theme.text,
+                backgroundColor: theme.background
+              }]}
               placeholder="Descripción de la tarea"
+              placeholderTextColor={theme.textSecondary}
               value={newTaskText}
               onChangeText={setNewTaskText}
               multiline
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity 
-                style={[styles.button, styles.cancelButton]}
+                style={[styles.button, { backgroundColor: theme.error }]}
                 onPress={() => setModalVisible(false)}
               >
                 <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.button, styles.saveButton]}
+                style={[styles.button, { backgroundColor: theme.success }]}
                 onPress={addNewTask}
               >
                 <Text style={styles.buttonText}>Guardar</Text>
@@ -183,12 +202,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#f5f5f5',
+    paddingBottom: 70,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
     justifyContent: 'space-between',
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
+    marginLeft: -8,
   },
   headerEmoji: {
     fontSize: 32,

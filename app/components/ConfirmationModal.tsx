@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 interface ConfirmationModalProps {
   visible: boolean;
@@ -20,28 +21,62 @@ export function ConfirmationModal({
   confirmText = "Aceptar",
   cancelText = "Cancelar"
 }: ConfirmationModalProps) {
+  const { theme } = useTheme();
+
   return (
     <Modal
       visible={visible}
       animationType="fade"
       transparent={true}
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>{title}</Text>
-          <Text style={styles.modalMessage}>{message}</Text>
+      <View style={[
+        styles.modalContainer,
+        { backgroundColor: 'rgba(0,0,0,0.5)' }
+      ]}>
+        <View style={[
+          styles.modalContent,
+          { backgroundColor: theme.surface }
+        ]}>
+          <Text style={[
+            styles.modalTitle,
+            { color: theme.text }
+          ]}>
+            {title}
+          </Text>
+          <Text style={[
+            styles.modalMessage,
+            { color: theme.textSecondary }
+          ]}>
+            {message}
+          </Text>
           <View style={styles.modalButtons}>
             <TouchableOpacity 
-              style={[styles.button, styles.cancelButton]}
+              style={[
+                styles.button,
+                { backgroundColor: theme.border }
+              ]}
               onPress={onCancel}
             >
-              <Text style={styles.buttonText}>{cancelText}</Text>
+              <Text style={[
+                styles.buttonText,
+                { color: theme.text }
+              ]}>
+                {cancelText}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.button, styles.deleteButton]}
+              style={[
+                styles.button,
+                { backgroundColor: theme.primary }
+              ]}
               onPress={onConfirm}
             >
-              <Text style={styles.buttonText}>{confirmText}</Text>
+              <Text style={[
+                styles.buttonText,
+                { color: theme.surface }
+              ]}>
+                {confirmText}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -55,10 +90,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: 'white',
     padding: 20,
     borderRadius: 10,
     width: '80%',
@@ -71,7 +104,6 @@ const styles = StyleSheet.create({
   },
   modalMessage: {
     fontSize: 16,
-    color: '#666',
     marginBottom: 20,
     textAlign: 'center',
     lineHeight: 22,
@@ -85,14 +117,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: '45%',
   },
-  cancelButton: {
-    backgroundColor: '#ff3b30',
-  },
-  deleteButton: {
-    backgroundColor: '#34c759',
-  },
   buttonText: {
-    color: 'white',
     textAlign: 'center',
     fontSize: 16,
   },

@@ -6,8 +6,10 @@ import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler'
 import { Task, TaskSet } from "./types";
 import { getTaskSets } from "./services/mockData";
 import { ConfirmationModal } from './components/ConfirmationModal';
+import { useTheme } from './context/ThemeContext';
 
 export default function Index() {
+  const { theme } = useTheme();
   const [taskSets, setTaskSets] = useState<TaskSet[]>(getTaskSets());
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -54,16 +56,16 @@ export default function Index() {
     return (
       <View style={styles.rightActionContainer}>
         <TouchableOpacity
-          style={styles.cloneButton}
+          style={[styles.cloneButton, { backgroundColor: theme.success }]}
           onPress={() => initiateClone(taskSet)}
         >
-          <Ionicons name="copy-outline" size={24} color="white" />
+          <Ionicons name="copy-outline" size={24} color={theme.text} />
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[styles.deleteButton, { backgroundColor: theme.error }]}
           onPress={() => initiateDelete(taskSet.id)}
         >
-          <Ionicons name="trash-outline" size={24} color="white" />
+          <Ionicons name="trash-outline" size={24} color={theme.text} />
         </TouchableOpacity>
       </View>
     );
@@ -76,14 +78,14 @@ export default function Index() {
         rightThreshold={40}
       >
         <TouchableOpacity 
-          style={styles.taskSetItem}
+          style={[styles.taskSetItem, { backgroundColor: theme.surface }]}
           onPress={() => router.push({
             pathname: "/taskSet/[id]",
             params: { id: item.id }
           })}
         >
           <Text style={styles.emoji}>{item.emoji}</Text>
-          <Text style={styles.taskSetName}>{item.name}</Text>
+          <Text style={[styles.taskSetName, { color: theme.text }]}>{item.name}</Text>
         </TouchableOpacity>
       </Swipeable>
     </GestureHandlerRootView>
@@ -105,13 +107,13 @@ export default function Index() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <TouchableOpacity 
-        style={styles.addButton}
+        style={[styles.addButton, { backgroundColor: theme.primary }]}
         onPress={() => setModalVisible(true)}
       >
-        <EvilIcons name="plus" size={30} color="white" />
-        <Text style={styles.addButtonText}>Nuevo Conjunto</Text>
+        <EvilIcons name="plus" size={30} color={theme.surface} />
+        <Text style={[styles.addButtonText, { color: theme.surface }]}>Nuevo Conjunto</Text>
       </TouchableOpacity>
 
       <FlatList
@@ -126,29 +128,39 @@ export default function Index() {
         transparent={true}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nuevo Conjunto de Tareas</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Nuevo Conjunto de Tareas</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: theme.border,
+                color: theme.text,
+                backgroundColor: theme.background
+              }]}
               placeholder="Nombre del conjunto"
+              placeholderTextColor={theme.textSecondary}
               value={newSetName}
               onChangeText={setNewSetName}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { 
+                borderColor: theme.border,
+                color: theme.text,
+                backgroundColor: theme.background
+              }]}
               placeholder="Emoji (opcional)"
+              placeholderTextColor={theme.textSecondary}
               value={newSetEmoji}
               onChangeText={setNewSetEmoji}
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity 
-                style={[styles.button, styles.cancelButton]}
+                style={[styles.button, { backgroundColor: theme.error }]}
                 onPress={() => setModalVisible(false)}
               >
                 <Text style={styles.buttonText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.button, styles.saveButton]}
+                style={[styles.button, { backgroundColor: theme.success }]}
                 onPress={addNewSet}
               >
                 <Text style={styles.buttonText}>Guardar</Text>
@@ -184,6 +196,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#f5f5f5',
+    paddingBottom: 70,
   },
   addButton: {
     flexDirection: 'row',
