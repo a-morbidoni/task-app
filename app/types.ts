@@ -8,6 +8,5 @@ export type Task = {
 export type TaskSet = {
   id: string;
   name: string;
-  emoji: string;
   tasks: Task[];
 } 

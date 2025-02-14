@@ -1,15 +1,15 @@
 import { EvilIcons, Ionicons } from '@expo/vector-icons';
-import { useRouter } from "expo-router";
-import { useEffect, useState, useCallback } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { CreateTaskSetModal } from './components/CreateTaskSetModal';
 import { useTheme } from './context/ThemeContext';
 import { addTaskSet, deleteTaskSet, getTaskSets } from './settings';
 import { TaskSet } from "./types";
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { useFocusEffect } from "expo-router";
+import { LoadingView } from './components/LoadingView';
 
 export default function Index() {
   const { theme } = useTheme();
@@ -56,7 +56,8 @@ export default function Index() {
   const handleDeleteConfirmation = async (confirmed: boolean) => {
     if (confirmed && taskSetToDelete) {
       await deleteTaskSet(taskSetToDelete);
-      await getTaskSets();
+      const updatedTaskSets = await getTaskSets();
+      setTaskSets(updatedTaskSets);
     }
     setDeleteModalVisible(false);
     setTaskSetToDelete(null);
@@ -106,36 +107,43 @@ export default function Index() {
     );
   };
 
-  const renderTaskSet = ({ item }: { item: TaskSet }) => (
-    <GestureHandlerRootView>
-      <Swipeable
-        renderRightActions={() => renderRightActions(item)}
-        rightThreshold={40}
-      >
-        <TouchableOpacity 
-          style={[styles.taskSetItem, { backgroundColor: theme.surface }]}
-          onPress={() => router.push({
-            pathname: "/taskSet/[id]",
-            params: { id: item.id }
-          })}
+  const renderTaskSet = ({ item }: { item: TaskSet }) => {
+    const completedTasks = item.tasks.filter(task => task.completed).length;
+    const totalTasks = item.tasks.length;
+
+    return (
+      <GestureHandlerRootView>
+        <Swipeable
+          renderRightActions={() => renderRightActions(item)}
+          rightThreshold={40}
         >
-          <Text style={styles.emoji}>{item.emoji}</Text>
-          <Text style={[styles.taskSetName, { color: theme.text }]}>{item.name}</Text>
-        </TouchableOpacity>
-      </Swipeable>
-    </GestureHandlerRootView>
-  );
+          <TouchableOpacity 
+            style={[styles.taskSetItem, { backgroundColor: theme.surface }]}
+            onPress={() => router.push({
+              pathname: "/taskSet/[id]",
+              params: { id: item.id }
+            })}
+          >
+            <Text style={[styles.taskSetName, { color: theme.text }]}>{item.name}</Text>
+            <Text style={[styles.taskCounter, { color: theme.text }]}>
+              {completedTasks}/{totalTasks}
+            </Text>
+          </TouchableOpacity>
+        </Swipeable>
+      </GestureHandlerRootView>
+    );
+  };
 
   const addNewSet = async () => {
     if (newSetName.trim()) {
       const newSet: TaskSet = {
         id: Date.now().toString(),
         name: newSetName.trim(),
-        emoji: newSetEmoji || '📝',
         tasks: []
       };
       await addTaskSet(newSet);
-      await getTaskSets();
+      const updatedTaskSets = await getTaskSets();
+      setTaskSets(updatedTaskSets);
       setModalVisible(false);
       setNewSetName('');
       setNewSetEmoji('');
@@ -143,16 +151,7 @@ export default function Index() {
   };
 
   if (isLoading) {
-    return (
-      <Animated.View 
-        entering={FadeIn.duration(200)}
-        style={[styles.container, { backgroundColor: theme.background }]}
-      >
-        <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando...</Text>
-        </View>
-      </Animated.View>
-    );
+    return <LoadingView />;
   }
 
   return (
@@ -228,6 +227,7 @@ const styles = StyleSheet.create({
   taskSetItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: 'white',
     padding: 15,
     borderRadius: 10,
@@ -244,6 +244,11 @@ const styles = StyleSheet.create({
   },
   taskSetName: {
     fontSize: 16,
+    flex: 1,
+  },
+  taskCounter: {
+    fontSize: 14,
+    marginLeft: 10,
   },
   rightActionContainer: {
     flexDirection: 'row',
@@ -270,14 +275,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 70,
     height: '100%',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 18,
   },
 });
 

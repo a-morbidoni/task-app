@@ -48,17 +48,6 @@ export function CreateTaskSetModal({
             value={newSetName}
             onChangeText={setNewSetName}
           />
-          <TextInput
-            style={[styles.input, { 
-              borderColor: theme.border,
-              color: theme.text,
-              backgroundColor: theme.background
-            }]}
-            placeholder="Emoji (opcional)"
-            placeholderTextColor={theme.textSecondary}
-            value={newSetEmoji}
-            onChangeText={setNewSetEmoji}
-          />
           <View style={styles.modalButtons}>
             <TouchableOpacity 
               style={[styles.button, { backgroundColor: theme.border }]}

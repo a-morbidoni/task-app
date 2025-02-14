@@ -8,6 +8,7 @@ import { getTaskSets, updateTaskSet } from '../settings';
 import { useTheme } from '../context/ThemeContext';
 import { NewTaskModal } from '../components/NewTaskModal';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { LoadingView } from '../components/LoadingView';
 
 export default function TaskSetScreen() {
   const { theme } = useTheme();
@@ -103,16 +104,7 @@ export default function TaskSetScreen() {
   };
 
   if (isLoading) {
-    return (
-      <Animated.View 
-        entering={FadeIn.duration(200)}
-        style={[styles.container, { backgroundColor: theme.background }]}
-      >
-        <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando...</Text>
-        </View>
-      </Animated.View>
-    );
+    return <LoadingView />;
   }
 
   return (
@@ -127,7 +119,6 @@ export default function TaskSetScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={theme.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerEmoji}>{taskSet?.emoji}</Text>
         {isEditingTitle ? (
           <View style={[styles.titleEditContainer, { backgroundColor: theme.surface }]}>
             <TextInput
@@ -384,13 +375,5 @@ const styles = StyleSheet.create({
   editIcon: {
     marginLeft: 8,
     opacity: 0.6,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 18,
   },
 }); 
