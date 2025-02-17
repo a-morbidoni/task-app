@@ -43,6 +43,20 @@ export function BottomNav() {
           Inicio
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={styles.bottomNavButton}
+        onPress={() => router.push("/scan-qr")}
+      >
+        <Ionicons 
+          name={pathname === "/scan-qr" ? "qr-code" : "qr-code-outline"} 
+          size={24} 
+          color={theme.primary}
+        />
+        <Text style={[styles.bottomNavText, { color: theme.primary }]}>
+          Escanear QR
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

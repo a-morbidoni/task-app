@@ -59,10 +59,13 @@ export default function TaskSetScreen() {
         title: newTaskText.trim(),
         completed: false
       };
+      
       const updatedTasks = [...tasks, newTask];
+      setTasks(updatedTasks);
+      
       const updatedTaskSet = { ...taskSet, tasks: updatedTasks };
       await updateTaskSet(updatedTaskSet, taskSet.id);
-      await loadTaskSet();
+      
       setModalVisible(false);
       setNewTaskText('');
     }
@@ -75,18 +78,20 @@ export default function TaskSetScreen() {
           ? { ...task, completed: !task.completed }
           : task
       );
+      setTasks(updatedTasks);
+      
       const updatedTaskSet = { ...taskSet, tasks: updatedTasks };
       await updateTaskSet(updatedTaskSet, taskSet.id);
-      await loadTaskSet();
     }
   };
 
   const deleteTask = async (taskId: string) => {
     if (taskSet) {
       const updatedTasks = tasks.filter(task => task.id !== taskId);
+      setTasks(updatedTasks);
+      
       const updatedTaskSet = { ...taskSet, tasks: updatedTasks };
       await updateTaskSet(updatedTaskSet, taskSet.id);
-      await loadTaskSet();
     }
   };
 

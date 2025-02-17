@@ -1,8 +1,8 @@
 import { Stack } from "expo-router";
-import { View, StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomNav } from './components/BottomNav';
 import { ThemeProvider } from './context/ThemeContext';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function Layout() {
   return (
@@ -28,6 +28,12 @@ export default function Layout() {
             name="taskSet/[id]" 
             options={{ 
               title: "Tareas"
+            }} 
+          />
+          <Stack.Screen 
+            name="scan-qr" 
+            options={{ 
+              title: "Escanear QR"
             }} 
           />
         </Stack>
