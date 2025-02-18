@@ -10,6 +10,7 @@ import { useTheme } from './context/ThemeContext';
 import { addTaskSet, deleteTaskSet, getTaskSets } from './settings';
 import { TaskSet } from "./types";
 import { LoadingView } from './components/LoadingView';
+import { QRModal } from './components/QRModal';
 
 export default function Index() {
   const { theme } = useTheme();
@@ -22,6 +23,8 @@ export default function Index() {
   const [taskSetToClone, setTaskSetToClone] = useState<TaskSet | null>(null);
   const [newSetName, setNewSetName] = useState('');
   const [newSetEmoji, setNewSetEmoji] = useState('');
+  const [qrModalVisible, setQRModalVisible] = useState(false);
+  const [selectedTaskSet, setSelectedTaskSet] = useState<TaskSet | null>(null);
   const router = useRouter();
 
   useFocusEffect(
@@ -88,6 +91,24 @@ export default function Index() {
     setCloneModalVisible(true);
   };
 
+  const initiateQRGeneration = (taskSet: TaskSet) => {
+    setSelectedTaskSet(taskSet);
+    setQRModalVisible(true);
+  };
+
+  const renderLeftActions = (taskSet: TaskSet) => {
+    return (
+      <View style={styles.leftActionContainer}>
+        <TouchableOpacity
+          style={[styles.qrButton, { backgroundColor: theme.primary }]}
+          onPress={() => initiateQRGeneration(taskSet)}
+        >
+          <Ionicons name="qr-code-outline" size={24} color={theme.text} />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderRightActions = (taskSet: TaskSet) => {
     return (
       <View style={styles.rightActionContainer}>
@@ -114,8 +135,10 @@ export default function Index() {
     return (
       <GestureHandlerRootView>
         <Swipeable
+          renderLeftActions={() => renderLeftActions(item)}
           renderRightActions={() => renderRightActions(item)}
-          rightThreshold={40}
+          leftThreshold={40}
+          overshootLeft={false}
         >
           <TouchableOpacity 
             style={[styles.taskSetItem, { backgroundColor: theme.surface }]}
@@ -200,6 +223,12 @@ export default function Index() {
         onCancel={() => handleCloneConfirmation(false)}
         confirmText="Clonar"
       />
+
+      <QRModal
+        visible={qrModalVisible}
+        onClose={() => setQRModalVisible(false)}
+        taskSet={selectedTaskSet}
+      />
     </Animated.View>
   );
 }
@@ -271,6 +300,25 @@ const styles = StyleSheet.create({
   },
   cloneButton: {
     backgroundColor: '#34c759',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 70,
+    height: '100%',
+  },
+  leftActionContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
+    borderTopLeftRadius: 10,
+    borderBottomLeftRadius: 10,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  qrButton: {
+    backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
     width: 70,
