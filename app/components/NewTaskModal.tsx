@@ -42,7 +42,10 @@ export function NewTaskModal({ visible, onClose, onSave, taskText, onChangeText 
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.button, { backgroundColor: theme.primary }]}
-              onPress={onSave}
+              onPress={() => {
+                onSave();
+                onClose();
+              }}
             >
               <Text style={styles.buttonText}>Guardar</Text>
             </TouchableOpacity>
