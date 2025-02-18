@@ -8,8 +8,6 @@ interface CreateTaskSetModalProps {
   onSave: () => void;
   newSetName: string;
   setNewSetName: (name: string) => void;
-  newSetEmoji: string;
-  setNewSetEmoji: (emoji: string) => void;
 }
 
 export function CreateTaskSetModal({
@@ -18,8 +16,6 @@ export function CreateTaskSetModal({
   onSave,
   newSetName,
   setNewSetName,
-  newSetEmoji,
-  setNewSetEmoji,
 }: CreateTaskSetModalProps) {
   const { theme } = useTheme();
 

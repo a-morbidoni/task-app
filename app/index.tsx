@@ -6,61 +6,57 @@ import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler'
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { CreateTaskSetModal } from './components/CreateTaskSetModal';
-import { useTheme } from './context/ThemeContext';
-import { addTaskSet, deleteTaskSet, getTaskSets } from './settings';
-import { TaskSet } from "./types";
 import { LoadingView } from './components/LoadingView';
 import { QRModal } from './components/QRModal';
+import { useTheme } from './context/ThemeContext';
+import { useModals } from './hooks/useModals';
+import { useTaskSets } from './hooks/useTaskSets';
+import { TaskSet } from "./types";
 
 export default function Index() {
   const { theme } = useTheme();
-  const [taskSets, setTaskSets] = useState<TaskSet[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [cloneModalVisible, setCloneModalVisible] = useState(false);
-  const [taskSetToDelete, setTaskSetToDelete] = useState<string | null>(null);
-  const [taskSetToClone, setTaskSetToClone] = useState<TaskSet | null>(null);
+  const {
+    taskSets,
+    isLoading,
+    loadTaskSets,
+    handleAddTaskSet,
+    handleDeleteTaskSet,
+    handleCloneTaskSet
+  } = useTaskSets();
+  
+  const {
+    modalVisible,
+    setModalVisible,
+    deleteModalVisible,
+    setDeleteModalVisible,
+    cloneModalVisible,
+    setCloneModalVisible,
+    qrModalVisible,
+    setQRModalVisible,
+    taskSetToDelete,
+    setTaskSetToDelete,
+    taskSetToClone,
+    setTaskSetToClone,
+    selectedTaskSet,
+    setSelectedTaskSet,
+  } = useModals();
+
   const [newSetName, setNewSetName] = useState('');
-  const [newSetEmoji, setNewSetEmoji] = useState('');
-  const [qrModalVisible, setQRModalVisible] = useState(false);
-  const [selectedTaskSet, setSelectedTaskSet] = useState<TaskSet | null>(null);
   const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-
-      const loadData = async () => {
-        setIsLoading(true);
-        try {
-          const savedTaskSets = await getTaskSets();
-          if (isActive) {
-            setTaskSets(savedTaskSets);
-          }
-        } catch (error) {
-          console.error('Error loading task sets:', error);
-        } finally {
-          if (isActive) {
-            setIsLoading(false);
-          }
-        }
-      };
-
-      loadData();
-
-      // Cleanup function
-      return () => {
-        isActive = false;
-      };
-    }, []) // Empty dependency array
+      if (isActive) {
+        loadTaskSets();
+      }
+      return () => { isActive = false; };
+    }, [loadTaskSets])
   );
 
   const handleDeleteConfirmation = async (confirmed: boolean) => {
     if (confirmed && taskSetToDelete) {
-      await deleteTaskSet(taskSetToDelete);
-      const updatedTaskSets = await getTaskSets();
-      setTaskSets(updatedTaskSets);
+      await handleDeleteTaskSet(taskSetToDelete);
     }
     setDeleteModalVisible(false);
     setTaskSetToDelete(null);
@@ -68,14 +64,7 @@ export default function Index() {
 
   const handleCloneConfirmation = async (confirmed: boolean) => {
     if (confirmed && taskSetToClone) {
-      const clonedSet: TaskSet = {
-        ...taskSetToClone,
-        id: Date.now().toString(),
-        name: `${taskSetToClone.name} (copia)`,
-        tasks: [...taskSetToClone.tasks]
-      };
-      await addTaskSet(clonedSet);
-      await getTaskSets();
+      await handleCloneTaskSet(taskSetToClone);
     }
     setCloneModalVisible(false);
     setTaskSetToClone(null);
@@ -164,12 +153,9 @@ export default function Index() {
         name: newSetName.trim(),
         tasks: []
       };
-      await addTaskSet(newSet);
-      const updatedTaskSets = await getTaskSets();
-      setTaskSets(updatedTaskSets);
+      await handleAddTaskSet(newSet);
       setModalVisible(false);
       setNewSetName('');
-      setNewSetEmoji('');
     }
   };
 
@@ -178,66 +164,68 @@ export default function Index() {
   }
 
   return (
-    <Animated.View 
-      entering={FadeIn.duration(200)}
-      style={[styles.container, { backgroundColor: theme.background }]}
-    >
-      <TouchableOpacity 
-        style={[styles.addButton, { backgroundColor: theme.primary }]}
-        onPress={() => setModalVisible(true)}
+    <View style={[styles.root, { backgroundColor: theme.background }]}>
+      <Animated.View 
+        entering={FadeIn.duration(200)}
+        style={[styles.container, { backgroundColor: theme.background }]}
       >
-        <EvilIcons name="plus" size={30} color={theme.surface} />
-        <Text style={[styles.addButtonText, { color: theme.surface }]}>Nuevo Conjunto</Text>
-      </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.addButton, { backgroundColor: theme.primary }]}
+          onPress={() => setModalVisible(true)}
+        >
+          <EvilIcons name="plus" size={30} color={theme.surface} />
+          <Text style={[styles.addButtonText, { color: theme.surface }]}>Nuevo Conjunto</Text>
+        </TouchableOpacity>
 
-      <FlatList
-        data={taskSets}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTaskSet}
-      />
+        <FlatList
+          data={taskSets}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTaskSet}
+        />
 
-      <CreateTaskSetModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onSave={addNewSet}
-        newSetName={newSetName}
-        setNewSetName={setNewSetName}
-        newSetEmoji={newSetEmoji}
-        setNewSetEmoji={setNewSetEmoji}
-      />
+        <CreateTaskSetModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          onSave={addNewSet}
+          newSetName={newSetName}
+          setNewSetName={setNewSetName}
+        />
 
-      <ConfirmationModal
-        visible={deleteModalVisible}
-        title="Eliminar Conjunto"
-        message="¿Estás seguro que deseas eliminar este conjunto y todas sus tareas?"
-        onConfirm={() => handleDeleteConfirmation(true)}
-        onCancel={() => handleDeleteConfirmation(false)}
-        confirmText="Eliminar"
-      />
+        <ConfirmationModal
+          visible={deleteModalVisible}
+          title="Eliminar Conjunto"
+          message="¿Estás seguro que deseas eliminar este conjunto y todas sus tareas?"
+          onConfirm={() => handleDeleteConfirmation(true)}
+          onCancel={() => handleDeleteConfirmation(false)}
+          confirmText="Eliminar"
+        />
 
-      <ConfirmationModal
-        visible={cloneModalVisible}
-        title="Clonar Conjunto"
-        message={`¿Deseas crear una copia de "${taskSetToClone?.name}"?`}
-        onConfirm={() => handleCloneConfirmation(true)}
-        onCancel={() => handleCloneConfirmation(false)}
-        confirmText="Clonar"
-      />
+        <ConfirmationModal
+          visible={cloneModalVisible}
+          title="Clonar Conjunto"
+          message={`¿Deseas crear una copia de "${taskSetToClone?.name}"?`}
+          onConfirm={() => handleCloneConfirmation(true)}
+          onCancel={() => handleCloneConfirmation(false)}
+          confirmText="Clonar"
+        />
 
-      <QRModal
-        visible={qrModalVisible}
-        onClose={() => setQRModalVisible(false)}
-        taskSet={selectedTaskSet}
-      />
-    </Animated.View>
+        <QRModal
+          visible={qrModalVisible}
+          onClose={() => setQRModalVisible(false)}
+          taskSet={selectedTaskSet}
+        />
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5f5',
     paddingBottom: 70,
   },
   addButton: {
@@ -267,10 +255,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  emoji: {
-    fontSize: 24,
-    marginRight: 10,
-  },
+
   taskSetName: {
     fontSize: 16,
     flex: 1,

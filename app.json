@@ -9,13 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "backgroundColor": "#000000"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "navigationBarColor": "#000000"
     },
     "web": {
       "bundler": "metro",
@@ -45,6 +47,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "splash": {
+      "backgroundColor": "#000000"
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#000000"
     }
   }
 }

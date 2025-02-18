@@ -1,16 +1,14 @@
-import { useState } from "react";
-import { StyleSheet, Text, View, Button, TouchableOpacity } from "react-native";
 import {
-  Camera,
-  CameraType,
-  BarcodeScanningResult,
-  CameraView,
-  useCameraPermissions,
+    BarcodeScanningResult,
+    CameraView,
+    useCameraPermissions
 } from "expo-camera";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "./context/ThemeContext";
+import { addTaskSet } from "./settings";
 import { TaskSet } from "./types";
-import { addTaskSet, getTaskSets } from "./settings";
 
 export default function ScanQR() {
   const [permission, requestPermission] = useCameraPermissions();
